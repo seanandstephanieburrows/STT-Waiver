@@ -1023,12 +1023,9 @@ async function generatePDF(data) {
     y += (Math.max(lLines.length, rLines.length) * 11) + 5;
   }
 
-  let pageCount = 1;
   function checkPage(needed = 30) {
     if (y + needed > FOOTER_Y - 10) {
-      drawFooter(pageCount, "??");
       doc.addPage();
-      pageCount++;
       drawHeader();
       y = 80;
     }
