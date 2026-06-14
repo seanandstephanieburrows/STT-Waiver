@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Strive To ThrIVe Wellness — Pop-Up Event Consent</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/emailjs-com/3.2.0/email.min.js"></script>
+<style>
+  :root {
+    --black:      #0A0A0A;
+    --black-soft: #141414;
+    --gold:       #C9A84C;
+    --gold-light: #E8D5A3;
+    --gold-dim:   #8a6f2e;
+    --white:      #FFFFFF;
+    --off-white:  #F8F6F1;
+    --gray-light: #EEECE8;
+    --gray-mid:   #C0BDB5;
+    --gray-text:  #555;
+    --error:      #C0392B;
+    --success:    #2E7D52;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--black);
+    color: var(--black);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    background: var(--black);
+    border-bottom: 2px solid var(--gold);
+    padding: 18px 24px 14px;
+    text-align: center;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .site-header .brand {
+    font-family: 'Times New Roman', serif;
+    font-size: clamp(18px, 4vw, 26px);
+    letter-spacing: 0.04em;
+    color: var(--white);
+    line-height: 1.2;
+  }
+  .brand .iv { color: var(--gold); }
+  .site-header .tagline {
+    font-size: 11px;
+    color: var(--gold-light);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ── Progress ── */
+  .progress-wrap {
+    background: var(--black-soft);
+    padding: 14px 24px 12px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 4px;
+  }
+  .prog-label {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    font-family: 'Arial', sans-serif;
+    flex: 1;
+    text-align: center;
+    line-height: 1.3;
+    transition: color 0.3s;
+  }
+  .prog-label.active { color: var(--gold); font-weight: bold; }
+  .prog-label.done   { color: var(--gold-dim); }
+  .progress-bar-track {
+    height: 3px;
+    background: #2a2a2a;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── Card ── */
+  .card {
+    max-width: 780px;
+    margin: 28px auto 40px;
+    background: var(--white);
+    border-radius: 4px;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+
+  /* ── Section ── */
+  .form-step { display: none; }
+  .form-step.active { display: block; }
+
+  .section-banner {
+    background: var(--black);
+    border-top: 2.5px solid var(--gold);
+    padding: 12px 24px 10px;
+  }
+  .section-banner h2 {
+    font-family: 'Times New Roman', serif;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--white);
+    font-weight: bold;
+  }
+  .section-banner p {
+    font-size: 11px;
+    color: var(--gold-light);
+    margin-top: 2px;
+    font-family: 'Arial', sans-serif;
+    font-style: italic;
+  }
+
+  .section-body {
+    padding: 20px 24px 24px;
+    background: var(--white);
+  }
+
+  /* ── Fields ── */
+  .field-group {
+    margin-bottom: 16px;
+  }
+  .field-row {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .field-row.col2 { grid-template-columns: 1fr 1fr; }
+  .field-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  label {
+    display: block;
+    font-family: 'Arial', sans-serif;
+    font-size: 10.5px;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gray-text);
+    margin-bottom: 5px;
+  }
+  label .req { color: var(--gold-dim); }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--gray-mid);
+    border-radius: 3px;
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    color: var(--black);
+    background: var(--off-white);
+    transition: border-color 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+    background: var(--white);
+  }
+  input.error, textarea.error { border-color: var(--error); }
+  textarea { resize: vertical; min-height: 72px; }
+
+  /* ── Checkboxes ── */
+  .cb-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    margin: 8px 0;
+  }
+  .cb-grid.col1 { grid-template-columns: 1fr; }
+  .cb-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .cb-item input[type="checkbox"] {
+    width: 16px; height: 16px;
+    min-width: 16px;
+    accent-color: var(--gold);
+    margin-top: 2px;
+    cursor: pointer;
+    border: 1.5px solid var(--gray-mid);
+    background: var(--off-white);
+  }
+  .cb-item span {
+    font-family: 'Arial', sans-serif;
+    font-size: 12.5px;
+    color: var(--black);
+    line-height: 1.4;
+  }
+
+  /* ── Radio ── */
+  .radio-row {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin: 6px 0;
+  }
+  .radio-item {
+    display: flex; align-items: center; gap: 7px; cursor: pointer;
+  }
+  .radio-item input[type="radio"] {
+    width: 15px; height: 15px;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+  .radio-item span { font-family: 'Arial', sans-serif; font-size: 13px; color: var(--black); }
+
+  /* ── Consent text blocks ── */
+  .consent-text {
+    background: var(--gray-light);
+    border-left: 3px solid var(--gold);
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #333;
+    margin: 10px 0 14px;
+    font-family: 'Georgia', serif;
+  }
+
+  /* ── Subheads within a step ── */
+  .sub-heading {
+    font-family: 'Arial', sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-text);
+    margin: 18px 0 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--gray-light);
+  }
+
+  /* ── Signature pad ── */
+  .sig-wrap {
+    margin: 10px 0 6px;
+  }
+  .sig-label {
+    font-family: 'Arial', sans-serif;
+    font-size: 10.5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-text);
+    margin-bottom: 6px;
+  }
+  #sig-canvas {
+    border: 2px solid var(--gold);
+    border-radius: 3px;
+    background: #fafaf8;
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .sig-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    align-items: center;
+  }
+  .btn-clear {
+    font-family: 'Arial', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1.5px solid var(--gray-mid);
+    background: transparent;
+    color: var(--gray-text);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-clear:hover { border-color: var(--gold); color: var(--gold-dim); }
+  .sig-hint { font-size: 11px; color: var(--gray-mid); font-style: italic; font-family: 'Arial', sans-serif; }
+  #sig-error { color: var(--error); font-size: 11px; margin-top: 4px; font-family: 'Arial', sans-serif; display: none; }
+
+  /* ── Buttons ── */
+  .btn-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px 22px;
+    background: var(--gray-light);
+    border-top: 1px solid var(--gray-mid);
+    gap: 12px;
+  }
+  .btn {
+    font-family: 'Arial', sans-serif;
+    font-size: 11.5px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    outline: none;
+  }
+  .btn-back {
+    background: transparent;
+    border: 1.5px solid var(--gray-mid);
+    color: var(--gray-text);
+  }
+  .btn-back:hover { border-color: var(--black); color: var(--black); }
+  .btn-next {
+    background: var(--gold);
+    color: var(--black);
+    box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+  }
+  .btn-next:hover { background: var(--gold-dim); color: var(--white); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-submit {
+    background: var(--black);
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    padding: 13px 32px;
+  }
+  .btn-submit:hover { background: var(--gold); color: var(--black); }
+
+  /* ── Notice box ── */
+  .notice {
+    background: #fffbf0;
+    border: 1px solid var(--gold-light);
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    color: #6b5a2a;
+    font-family: 'Arial', sans-serif;
+    line-height: 1.5;
+    margin: 12px 0;
+  }
+  .notice strong { color: var(--gold-dim); }
+
+  /* ── Success Screen ── */
+  #success-screen {
+    display: none;
+    max-width: 560px;
+    margin: 50px auto;
+    text-align: center;
+    padding: 20px;
+  }
+  .success-icon {
+    width: 70px; height: 70px;
+    border: 3px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 30px;
+  }
+  #success-screen h2 {
+    font-family: 'Times New Roman', serif;
+    font-size: 26px;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+  #success-screen .sub {
+    color: var(--gold-light);
+    font-size: 14px;
+    line-height: 1.7;
+    font-family: 'Arial', sans-serif;
+    margin-bottom: 28px;
+  }
+  .success-name { color: var(--gold); font-weight: bold; }
+  .pdf-action-box {
+    background: var(--black-soft);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+  }
+  .pdf-action-box p {
+    color: var(--gold-light);
+    font-family: 'Arial', sans-serif;
+    font-size: 13px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .pdf-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-pdf-open {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--black);
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-pdf-open:hover { background: var(--gold-dim); color: var(--white); }
+  .btn-pdf-save {
+    background: transparent;
+    color: var(--gold);
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    border: 2px solid var(--gold);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-pdf-save:hover { background: var(--gold); color: var(--black); }
+  .success-note {
+    color: var(--gray-mid);
+    font-family: 'Arial', sans-serif;
+    font-size: 11px;
+    font-style: italic;
+    margin-top: 12px;
+  }
+
+  /* ── Error msg ── */
+  .error-msg { color: var(--error); font-size: 11px; margin-top: 3px; font-family: 'Arial', sans-serif; }
+
+  /* ── Sending overlay ── */
+  #sending-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  #sending-overlay.show { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid #333;
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #sending-overlay p { color: var(--gold-light); font-family: 'Arial', sans-serif; font-size: 14px; }
+
+  @media (max-width: 600px) {
+    .field-row.col2, .field-row.col3 { grid-template-columns: 1fr; }
+    .cb-grid { grid-template-columns: 1fr; }
+    .card { margin: 12px 0 0; border-radius: 0; }
+    .btn-row { flex-wrap: wrap; }
+    .btn { width: 100%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="brand">Strive To Thr<span class="iv">IV</span>e Wellness</div>
+  <div class="tagline">Bringing wellness to you.</div>
+</header>
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-labels" id="prog-labels"></div>
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- Sending Overlay -->
+<div id="sending-overlay">
+  <div class="spinner"></div>
+  <p>Generating your signed consent PDF…</p>
+</div>
+
+<!-- Form Card -->
+<div class="card" id="form-card">
+  <form id="consent-form" novalidate>
+
+    <!-- ══ STEP 1: Patient Info ══ -->
+    <div class="form-step active" data-step="1">
+      <div class="section-banner">
+        <h2>Patient Information</h2>
+        <p>Please fill in your personal and contact details accurately.</p>
+      </div>
+      <div class="section-body">
+        <div class="field-row col2">
+          <div class="field-group">
+            <label>Full Legal Name <span class="req">*</span></label>
+            <input type="text" name="patient_name" required placeholder="First and Last Name"/>
+          </div>
+          <div class="field-group">
+            <label>Date of Birth <span class="req">*</span></label>
+            <input type="date" name="dob" required/>
+          </div>
+        </div>
+        <div class="field-row col2">
+          <div class="field-group">
+            <label>Phone Number <span class="req">*</span></label>
+            <input type="tel" name="phone" required placeholder="(720) 555-0000"/>
+          </div>
+          <div class="field-group">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" name="email" required placeholder="you@example.com"/>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Street Address</label>
+          <input type="text" name="address" placeholder="123 Main St, City, CO 80000"/>
+        </div>
+        <div class="field-row col2">
+          <div class="field-group">
+            <label>Emergency Contact Name</label>
+            <input type="text" name="ec_name" placeholder="Full Name"/>
+          </div>
+          <div class="field-group">
+            <label>Emergency Contact Phone</label>
+            <input type="tel" name="ec_phone" placeholder="(720) 555-0000"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STEP 2: Treatment Selection ══ -->
+    <div class="form-step" data-step="2">
+      <div class="section-banner">
+        <h2>Treatment Selection</h2>
+        <p>Select all services you are receiving today.</p>
+      </div>
+      <div class="section-body">
+        <div class="cb-grid col1">
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="IV Hydration (Normal Saline / Lactated Ringer's)"/><span>IV Hydration (Normal Saline / Lactated Ringer's)</span></label>
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="Myers-Type IV (Vitamins, Minerals, Antioxidants)"/><span>Myers-Type IV (Vitamins, Minerals, Antioxidants)</span></label>
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="B12 Injection (Methylcobalamin)"/><span>B12 Injection (Methylcobalamin)</span></label>
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="B12 / LipoLean Injection (MIC+B12)"/><span>B12 / LipoLean Injection (MIC+B12)</span></label>
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="Vitamin D3 Injection"/><span>Vitamin D3 Injection</span></label>
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="Glutathione Push"/><span>Glutathione Push</span></label>
+          <label class="cb-item"><input type="checkbox" name="tx[]" value="NAD+ IV Infusion"/><span>NAD+ IV Infusion</span></label>
+        </div>
+        <div class="field-group" style="margin-top:14px;">
+          <label>Other / Additional Notes</label>
+          <input type="text" name="tx_other" placeholder="Describe any other requested treatment"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STEP 3: Medical History ══ -->
+    <div class="form-step" data-step="3">
+      <div class="section-banner">
+        <h2>Medical History & Screening</h2>
+        <p>Check all conditions that apply. Disclosure is required for your safety.</p>
+      </div>
+      <div class="section-body">
+        <div class="cb-grid">
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Heart Disease / Cardiac Condition"/><span>Heart Disease / Cardiac Condition</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Congestive Heart Failure (CHF)"/><span>Congestive Heart Failure (CHF)</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="High Blood Pressure (Hypertension)"/><span>High Blood Pressure (Hypertension)</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Kidney Disease / Renal Insufficiency"/><span>Kidney Disease / Renal Insufficiency</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Liver Disease"/><span>Liver Disease</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Diabetes (Type 1 or 2)"/><span>Diabetes (Type 1 or 2)</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Seizure Disorder / Epilepsy"/><span>Seizure Disorder / Epilepsy</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Blood Clotting / Coagulation Disorder"/><span>Blood Clotting / Coagulation Disorder</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Active Infection or Fever"/><span>Active Infection or Fever</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Autoimmune Disease"/><span>Autoimmune Disease</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Cancer (current or history)"/><span>Cancer (current or history)</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Pregnancy"/><span>Pregnancy</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Breastfeeding / Lactating"/><span>Breastfeeding / Lactating</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Latex Allergy"/><span>Latex Allergy</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Medication or Supplement Allergy"/><span>Medication or Supplement Allergy</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Prior IV Complication or Reaction"/><span>Prior IV Complication or Reaction</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Currently Taking Blood Thinners"/><span>Currently Taking Blood Thinners</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="Pulmonary Edema or Fluid Overload History"/><span>Pulmonary Edema / Fluid Overload History</span></label>
+          <label class="cb-item"><input type="checkbox" name="hx[]" value="None of the Above" id="hx-none"/><span><strong>None of the Above</strong></span></label>
+        </div>
+        <div class="field-group" style="margin-top:16px;">
+          <label>Please explain any checked conditions (include current medications)</label>
+          <textarea name="hx_explain" placeholder="List conditions, medications, allergies, and any relevant details…"></textarea>
+        </div>
+
+        <div class="sub-heading">Substance Disclosure</div>
+        <div class="field-group">
+          <label>Alcohol consumed in the last 24 hours?</label>
+          <div class="radio-row">
+            <label class="radio-item"><input type="radio" name="alcohol" value="No" checked/><span>No</span></label>
+            <label class="radio-item"><input type="radio" name="alcohol" value="Yes"/><span>Yes</span></label>
+          </div>
+        </div>
+        <div class="field-group" id="alcohol-count-wrap" style="display:none;">
+          <label>Approximate number of drinks</label>
+          <input type="text" name="alcohol_count" placeholder="e.g. 2"/>
+        </div>
+        <div class="field-group">
+          <label>Cannabis use in the last 72 hours?</label>
+          <div class="radio-row">
+            <label class="radio-item"><input type="radio" name="cannabis" value="No" checked/><span>No</span></label>
+            <label class="radio-item"><input type="radio" name="cannabis" value="Yes"/><span>Yes</span></label>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Recreational or non-prescribed substance use in the last 72 hours?</label>
+          <div class="radio-row">
+            <label class="radio-item"><input type="radio" name="substances" value="No" checked/><span>No</span></label>
+            <label class="radio-item"><input type="radio" name="substances" value="Yes"/><span>Yes</span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STEP 4: Consent & Risks ══ -->
+    <div class="form-step" data-step="4">
+      <div class="section-banner">
+        <h2>Informed Consent & Risks</h2>
+        <p>Please read carefully before proceeding.</p>
+      </div>
+      <div class="section-body">
+
+        <div class="sub-heading">Consent for Treatment</div>
+        <div class="consent-text">
+          I voluntarily consent to receive IV hydration therapy, vitamin therapy, injections, medications, amino acids, minerals, antioxidants, and wellness treatments offered by <strong>Strive To ThrIVe Wellness LLC</strong> and administered by a licensed Registered Nurse under the supervision and standing orders of its Colorado-licensed Medical Director. I acknowledge that no guarantee has been made regarding results or outcomes. I understand that wellness IV therapy is not a substitute for emergency medical care, primary care services, or treatment of diagnosed medical conditions.
+        </div>
+
+        <div class="sub-heading">Potential Risks & Side Effects</div>
+        <div class="consent-text">
+          I understand that risks may include but are not limited to: pain, bruising, redness, swelling, or bleeding at the IV site; infection or phlebitis; infiltration or extravasation of IV fluid; nausea, dizziness, headache, or vasovagal syncope; allergic or anaphylactic reaction; changes in blood pressure or heart rate; fluid overload (particularly in patients with cardiac or renal disease); and rare serious complications including pulmonary edema or systemic reaction.
+        </div>
+
+        <div class="sub-heading">Alcohol Acknowledgment</div>
+        <div class="consent-text">
+          I understand that IV hydration therapy does <strong>not</strong> reverse intoxication or alcohol poisoning, does <strong>not</strong> make me safe or legal to operate a motor vehicle, and is not a treatment for alcohol use disorder. Strive To ThrIVe Wellness reserves the right to decline treatment if the treating RN or Medical Director determines I appear intoxicated, impaired, or unable to provide informed consent.
+        </div>
+
+        <div class="sub-heading">Release of Liability</div>
+        <div class="consent-text">
+          I certify that I have answered all questions truthfully and to the best of my knowledge. Participation is entirely voluntary and I may withdraw consent at any time prior to or during treatment. I agree to release and hold harmless Strive To ThrIVe Wellness LLC, its members, officers, Medical Director, and nursing staff from liability for complications arising from undisclosed medical conditions or from the inherent risks of IV therapy as described above. This waiver is governed by the laws of the State of Colorado.
+        </div>
+
+        <div class="sub-heading">HIPAA & Privacy</div>
+        <div class="consent-text">
+          I acknowledge that my protected health information (PHI) may be collected, stored, and maintained in Strive To ThrIVe Wellness's HIPAA-compliant medical record system in accordance with applicable federal and Colorado state privacy laws.
+        </div>
+
+        <div class="sub-heading">Photography & Marketing (Optional)</div>
+        <div style="margin-bottom:12px;">
+          <label class="cb-item"><input type="checkbox" name="photo_ok" value="yes"/><span>I <strong>authorize</strong> Strive To ThrIVe Wellness LLC to use my likeness, photo, video, or testimonial for marketing and promotional purposes.</span></label>
+        </div>
+
+        <div class="notice">
+          <strong>By proceeding to sign, you confirm</strong> you have read and understand all of the above consent language and are voluntarily agreeing to treatment.
+        </div>
+
+        <div class="field-group">
+          <label>I acknowledge I have read and understand the above <span class="req">*</span></label>
+          <label class="cb-item" style="margin-top:6px;"><input type="checkbox" name="read_confirm" required id="read-confirm"/><span>Yes, I have read and understood the consent, risks, and liability waiver above.</span></label>
+          <div class="error-msg" id="read-error" style="display:none;">You must confirm you have read and understood the consent.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STEP 5: Signature ══ -->
+    <div class="form-step" data-step="5">
+      <div class="section-banner">
+        <h2>Electronic Signature</h2>
+        <p>Sign below using your finger, stylus, or mouse.</p>
+      </div>
+      <div class="section-body">
+        <div class="field-row col2">
+          <div class="field-group">
+            <label>Today's Date</label>
+            <input type="date" name="sig_date" id="sig-date" readonly/>
+          </div>
+          <div class="field-group">
+            <label>Time of Signing</label>
+            <input type="text" name="sig_time" id="sig-time" readonly/>
+          </div>
+        </div>
+
+        <div class="consent-text" style="font-size:12px; margin-bottom:16px;">
+          By signing below, I confirm that I am the individual named on this form (or the parent/legal guardian of the named minor), that I have read and voluntarily agree to the terms of this Consent, Medical Screening & Liability Waiver, and that my electronic signature carries the same legal weight as a handwritten signature under the Colorado Electronic Transactions Act (C.R.S. § 24-71.3-101 et seq.) and the federal E-SIGN Act.
+        </div>
+
+        <div class="sig-wrap">
+          <div class="sig-label">Patient Signature <span class="req" style="color:var(--error)">*</span></div>
+          <canvas id="sig-canvas" width="600" height="160"></canvas>
+          <div class="sig-controls">
+            <button type="button" class="btn-clear" onclick="clearSig()">Clear Signature</button>
+            <span class="sig-hint">Draw your signature above</span>
+          </div>
+          <div id="sig-error">Please provide your signature before submitting.</div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div class="sub-heading">Minor Consent (complete only if patient is under 18)</div>
+          <div class="notice" style="margin-bottom:12px;">Under Colorado law (C.R.S. § 13-22-103), a parent or legal guardian must provide written consent for medical treatment of a minor.</div>
+          <div class="field-row col2">
+            <div class="field-group">
+              <label>Parent / Guardian Name</label>
+              <input type="text" name="guardian_name" placeholder="Full Legal Name"/>
+            </div>
+            <div class="field-group">
+              <label>Relationship to Minor</label>
+              <input type="text" name="guardian_rel" placeholder="e.g. Mother, Father, Legal Guardian"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </form><!-- end form -->
+
+  <!-- Button Row -->
+  <div class="btn-row" id="btn-row">
+    <button type="button" class="btn btn-back" id="btn-back" onclick="prevStep()" style="visibility:hidden">← Back</button>
+    <button type="button" class="btn btn-next" id="btn-next" onclick="nextStep()">Next →</button>
+  </div>
+</div><!-- end card -->
+
+<!-- Success Screen -->
+<div id="success-screen">
+  <div class="success-icon">✓</div>
+  <h2>Consent Complete</h2>
+  <p class="sub">Thank you, <span class="success-name" id="success-name"></span>.<br/>
+  Your signed consent PDF has been downloaded to your device.</p>
+
+  <div class="pdf-action-box">
+    <p>Your PDF should have downloaded automatically. If you don't see it, tap the button below to download it again.</p>
+    <div class="pdf-btns">
+      <button class="btn-pdf-open" onclick="redownloadPDF()">&#128196; Download PDF Again</button>
+    </div>
+  </div>
+
+  <p class="success-note" style="margin-top:12px;">Please speak with your RN if you have any questions before treatment begins.</p>
+</div>
+
+<script>
+// ── Configuration ─────────────────────────────────────────────────────────────
+// TO ENABLE EMAIL: Sign up free at emailjs.com, create a service + template,
+// then replace the three values below.
+const EMAILJS_SERVICE_ID  = "YOUR_SERVICE_ID";   // e.g. "service_abc123"
+const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID";  // e.g. "template_xyz456"
+const EMAILJS_PUBLIC_KEY  = "YOUR_PUBLIC_KEY";   // e.g. "AbCdEfGhIjKlMnOp"
+const RECIPIENT_EMAIL     = "burrowss@fortinet.com"; // ← your email
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STEPS = ["Patient Info", "Treatment", "Medical Hx", "Consent", "Signature"];
+const TOTAL = STEPS.length;
+let currentStep = 1;
+
+// ── Progress UI ───────────────────────────────────────────────────────────────
+function renderProgress() {
+  const labels = document.getElementById("prog-labels");
+  labels.innerHTML = STEPS.map((s, i) => {
+    const n = i + 1;
+    let cls = "";
+    if (n === currentStep) cls = "active";
+    else if (n < currentStep) cls = "done";
+    return `<span class="prog-label ${cls}">${n}. ${s}</span>`;
+  }).join("");
+  document.getElementById("prog-fill").style.width = ((currentStep - 1) / (TOTAL - 1) * 100) + "%";
+}
+
+// ── Step Nav ──────────────────────────────────────────────────────────────────
+function showStep(n) {
+  document.querySelectorAll(".form-step").forEach(el => el.classList.remove("active"));
+  document.querySelector(`[data-step="${n}"]`).classList.add("active");
+
+  const back = document.getElementById("btn-back");
+  const next = document.getElementById("btn-next");
+  back.style.visibility = n > 1 ? "visible" : "hidden";
+
+  if (n === TOTAL) {
+    next.textContent = "Submit Consent";
+    next.className = "btn btn-submit";
+    next.onclick = submitForm;
+    // Set date/time
+    const now = new Date();
+    document.getElementById("sig-date").value = now.toISOString().split("T")[0];
+    document.getElementById("sig-time").value = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } else {
+    next.textContent = "Next →";
+    next.className = "btn btn-next";
+    next.onclick = nextStep;
+  }
+  renderProgress();
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+function nextStep() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep < TOTAL) { currentStep++; showStep(currentStep); }
+}
+function prevStep() {
+  if (currentStep > 1) { currentStep--; showStep(currentStep); }
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
+function validateStep(n) {
+  if (n === 1) {
+    const fields = ["patient_name", "dob", "phone", "email"];
+    let ok = true;
+    fields.forEach(name => {
+      const el = document.querySelector(`[name="${name}"]`);
+      if (!el.value.trim()) { el.classList.add("error"); ok = false; }
+      else el.classList.remove("error");
+    });
+    if (!ok) { alert("Please fill in all required fields before continuing."); return false; }
+    return true;
+  }
+  if (n === 4) {
+    const cb = document.getElementById("read-confirm");
+    if (!cb.checked) {
+      document.getElementById("read-error").style.display = "block";
+      return false;
+    }
+    document.getElementById("read-error").style.display = "none";
+    return true;
+  }
+  return true;
+}
+
+// ── "None of the Above" mutex ─────────────────────────────────────────────────
+document.getElementById("hx-none").addEventListener("change", function() {
+  if (this.checked) {
+    document.querySelectorAll('[name="hx[]"]').forEach(cb => {
+      if (cb !== this) cb.checked = false;
+    });
+  }
+});
+document.querySelectorAll('[name="hx[]"]').forEach(cb => {
+  if (cb.id !== "hx-none") cb.addEventListener("change", () => {
+    if (cb.checked) document.getElementById("hx-none").checked = false;
+  });
+});
+
+// Alcohol count show/hide
+document.querySelectorAll('[name="alcohol"]').forEach(r => r.addEventListener("change", () => {
+  document.getElementById("alcohol-count-wrap").style.display =
+    document.querySelector('[name="alcohol"]:checked').value === "Yes" ? "block" : "none";
+}));
+
+// ── Signature Canvas ──────────────────────────────────────────────────────────
+const canvas = document.getElementById("sig-canvas");
+const ctx = canvas.getContext("2d");
+let drawing = false, hasSig = false;
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / r.width;
+  const scaleY = canvas.height / r.height;
+  if (e.touches) {
+    return {
+      x: (e.touches[0].clientX - r.left) * scaleX,
+      y: (e.touches[0].clientY - r.top) * scaleY
+    };
+  }
+  return { x: (e.clientX - r.left) * scaleX, y: (e.clientY - r.top) * scaleY };
+}
+
+function startDraw(e) { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+function draw(e)      { if (!drawing) return; e.preventDefault(); const p = getPos(e); ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#0A0A0A"; ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; }
+function endDraw()    { drawing = false; }
+
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mouseup", endDraw);
+canvas.addEventListener("touchstart", startDraw, {passive:false});
+canvas.addEventListener("touchmove", draw, {passive:false});
+canvas.addEventListener("touchend", endDraw);
+
+function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); hasSig = false; document.getElementById("sig-error").style.display = "none"; }
+
+// ── Collect Form Data ─────────────────────────────────────────────────────────
+function collectData() {
+  const fd = new FormData(document.getElementById("consent-form"));
+  const get = k => fd.get(k) || "";
+  const getAll = k => fd.getAll(k);
+
+  return {
+    patient_name:    get("patient_name"),
+    dob:             get("dob"),
+    phone:           get("phone"),
+    email:           get("email"),
+    address:         get("address"),
+    ec_name:         get("ec_name"),
+    ec_phone:        get("ec_phone"),
+    treatments:      getAll("tx[]").join(", ") || get("tx_other") || "Not specified",
+    tx_other:        get("tx_other"),
+    hx:              getAll("hx[]").join(", ") || "None disclosed",
+    hx_explain:      get("hx_explain"),
+    alcohol:         get("alcohol"),
+    alcohol_count:   get("alcohol_count"),
+    cannabis:        get("cannabis"),
+    substances:      get("substances"),
+    photo_ok:        get("photo_ok") === "yes" ? "Authorized" : "Not authorized",
+    guardian_name:   get("guardian_name"),
+    guardian_rel:    get("guardian_rel"),
+    sig_date:        get("sig_date"),
+    sig_time:        get("sig_time"),
+    sig_image:       canvas.toDataURL("image/png"),
+    submitted_at:    new Date().toLocaleString("en-US", {timeZone:"America/Denver"}),
+  };
+}
+
+// ── Generate PDF ──────────────────────────────────────────────────────────────
+async function generatePDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+  const W = 612, M = 45, CW = W - M * 2;
+  let y = 0;
+
+  function gold()  { doc.setDrawColor(201,168,76); doc.setFillColor(201,168,76); }
+  function black() { doc.setDrawColor(10,10,10);   doc.setFillColor(10,10,10); }
+
+  // Header
+  doc.setFillColor(10,10,10);
+  doc.rect(0, 0, W, 70, "F");
+  gold(); doc.setLineWidth(2); doc.line(0, 70, W, 70);
+
+  doc.setFont("times","bold"); doc.setFontSize(22); doc.setTextColor(255,255,255);
+  const nm1 = "Strive To Thr", nm2 = "IV", nm3 = "e Wellness";
+  const w1 = doc.getTextWidth(nm1), w2 = doc.getTextWidth(nm2), w3 = doc.getTextWidth(nm3);
+  const totalW = w1 + w2 + w3;
+  let nx = (W - totalW) / 2;
+  doc.text(nm1, nx, 38); nx += w1;
+  doc.setTextColor(201,168,76); doc.text(nm2, nx, 38); nx += w2;
+  doc.setTextColor(255,255,255); doc.text(nm3, nx, 38);
+
+  doc.setFont("times","italic"); doc.setFontSize(9.5); doc.setTextColor(232,213,163);
+  doc.text("Bringing wellness to you.", W/2, 52, {align:"center"});
+  doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(232,213,163);
+  doc.text("Pop-Up Event IV Therapy Consent, Medical Screening & Liability Waiver", W/2, 63, {align:"center"});
+
+  y = 90;
+
+  function sectionHead(title) {
+    doc.setFillColor(10,10,10);
+    doc.rect(M, y, CW, 20, "F");
+    gold(); doc.setLineWidth(1.5); doc.line(M, y, M+CW, y);
+    doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(255,255,255);
+    doc.text(title, M+7, y+13.5);
+    y += 26;
+  }
+
+  function fieldRow(label, value) {
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(100,100,100);
+    doc.text(label.toUpperCase(), M, y);
+    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(20,20,20);
+    const lines = doc.splitTextToSize(value || "—", CW);
+    doc.text(lines, M, y+12);
+    y += 12 + (lines.length * 12) + 6;
+  }
+
+  function checkPage() { if (y > 720) { doc.addPage(); y = 40; } }
+
+  // Patient Info
+  sectionHead("PATIENT INFORMATION");
+  fieldRow("Full Name", data.patient_name);
+  fieldRow("Date of Birth", data.dob);
+  fieldRow("Phone", data.phone);
+  fieldRow("Email", data.email);
+  if (data.address) fieldRow("Address", data.address);
+  if (data.ec_name) fieldRow("Emergency Contact", `${data.ec_name} — ${data.ec_phone}`);
+  y += 6; checkPage();
+
+  // Treatments
+  sectionHead("TREATMENT SELECTION");
+  fieldRow("Services Requested", data.treatments + (data.tx_other ? ` / ${data.tx_other}` : ""));
+  y += 6; checkPage();
+
+  // Medical History
+  sectionHead("MEDICAL HISTORY");
+  fieldRow("Conditions Disclosed", data.hx);
+  if (data.hx_explain) fieldRow("Explanation / Medications", data.hx_explain);
+  fieldRow("Alcohol (last 24h)", data.alcohol + (data.alcohol_count ? ` — ${data.alcohol_count} drinks` : ""));
+  fieldRow("Cannabis (last 72h)", data.cannabis);
+  fieldRow("Other Substances (72h)", data.substances);
+  y += 6; checkPage();
+
+  // Consent summary
+  sectionHead("CONSENT & AUTHORIZATIONS");
+  fieldRow("Photography / Marketing", data.photo_ok);
+  fieldRow("Minor Guardian", data.guardian_name ? `${data.guardian_name} (${data.guardian_rel})` : "N/A — Adult Patient");
+  y += 6; checkPage();
+
+  // Signature
+  sectionHead("ELECTRONIC SIGNATURE");
+  fieldRow("Signed by", data.patient_name);
+  fieldRow("Date / Time", `${data.sig_date}  ${data.sig_time} (Mountain Time)`);
+  fieldRow("Submitted", data.submitted_at + " MT");
+
+  // Sig image
+  if (y > 650) { doc.addPage(); y = 40; }
+  doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(100,100,100);
+  doc.text("PATIENT SIGNATURE", M, y);
+  y += 6;
+  doc.setDrawColor(201,168,76); doc.setLineWidth(1);
+  doc.rect(M, y, 280, 80);
+  doc.addImage(data.sig_image, "PNG", M+2, y+2, 276, 76);
+  y += 90;
+
+  // Footer
+  doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setTextColor(140,140,140);
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    gold(); doc.setLineWidth(0.8); doc.line(M, 770, W-M, 770);
+    doc.setTextColor(140,140,140);
+    doc.text(`Strive To ThrIVe Wellness LLC  |  Colorado-Licensed Medical Services  |  HIPAA Compliant  |  Page ${i} of ${pages}`, W/2, 782, {align:"center"});
+  }
+
+  return doc;
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function submitForm() {
+  if (!hasSig) {
+    document.getElementById("sig-error").style.display = "block";
+    return;
+  }
+  document.getElementById("sig-error").style.display = "none";
+
+  const overlay = document.getElementById("sending-overlay");
+  overlay.classList.add("show");
+
+  const data = collectData();
+
+  try {
+    const pdfDoc = await generatePDF(data);
+
+    overlay.classList.remove("show");
+
+    // Hide form, show success
+    document.getElementById("form-card").style.display = "none";
+    document.querySelector(".progress-wrap").style.display = "none";
+    document.getElementById("success-name").textContent = data.patient_name;
+
+    // Use jsPDF .save() — the only method that works universally across all browsers/apps
+    const filename = `STT_Consent_${data.patient_name.replace(/\s+/g,"_")}_${data.sig_date}.pdf`;
+    window._lastPdfDoc  = pdfDoc;
+    window._lastFilename = filename;
+    pdfDoc.save(filename);
+
+    document.getElementById("success-screen").style.display = "block";
+
+  } catch (err) {
+    overlay.classList.remove("show");
+    console.error(err);
+    alert("There was a problem generating your consent form. Please try again or speak with a staff member.");
+  }
+}
+
+// PDF open/save handled via direct <a> link and iframe embed
+
+function redownloadPDF() {
+  if (window._lastPdfDoc && window._lastFilename) {
+    window._lastPdfDoc.save(window._lastFilename);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderProgress();
+showStep(1);
+</script>
+</body>
+</html>
