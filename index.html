@@ -931,106 +931,201 @@ async function generatePDF(data) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
   const W = 612, M = 45, CW = W - M * 2;
+  const FOOTER_Y = 755;
   let y = 0;
 
   function gold()  { doc.setDrawColor(201,168,76); doc.setFillColor(201,168,76); }
   function black() { doc.setDrawColor(10,10,10);   doc.setFillColor(10,10,10); }
 
-  // Header
-  doc.setFillColor(10,10,10);
-  doc.rect(0, 0, W, 70, "F");
-  gold(); doc.setLineWidth(2); doc.line(0, 70, W, 70);
+  function drawHeader() {
+    doc.setFillColor(10,10,10);
+    doc.rect(0, 0, W, 68, "F");
+    gold(); doc.setLineWidth(2); doc.line(0, 68, W, 68);
+    doc.setFont("times","bold"); doc.setFontSize(22); doc.setTextColor(255,255,255);
+    const nm1 = "Strive To Thr", nm2 = "IV", nm3 = "e Wellness";
+    const w1 = doc.getTextWidth(nm1), w2 = doc.getTextWidth(nm2), w3 = doc.getTextWidth(nm3);
+    let nx = (W - w1 - w2 - w3) / 2;
+    doc.text(nm1, nx, 36); nx += w1;
+    doc.setTextColor(201,168,76); doc.text(nm2, nx, 36); nx += w2;
+    doc.setTextColor(255,255,255); doc.text(nm3, nx, 36);
+    doc.setFont("times","italic"); doc.setFontSize(9); doc.setTextColor(232,213,163);
+    doc.text("Bringing wellness to you.", W/2, 50, {align:"center"});
+    doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.setTextColor(232,213,163);
+    doc.text("Pop-Up Event IV Therapy Consent, Medical Screening & Liability Waiver", W/2, 61, {align:"center"});
+  }
 
-  doc.setFont("times","bold"); doc.setFontSize(22); doc.setTextColor(255,255,255);
-  const nm1 = "Strive To Thr", nm2 = "IV", nm3 = "e Wellness";
-  const w1 = doc.getTextWidth(nm1), w2 = doc.getTextWidth(nm2), w3 = doc.getTextWidth(nm3);
-  const totalW = w1 + w2 + w3;
-  let nx = (W - totalW) / 2;
-  doc.text(nm1, nx, 38); nx += w1;
-  doc.setTextColor(201,168,76); doc.text(nm2, nx, 38); nx += w2;
-  doc.setTextColor(255,255,255); doc.text(nm3, nx, 38);
-
-  doc.setFont("times","italic"); doc.setFontSize(9.5); doc.setTextColor(232,213,163);
-  doc.text("Bringing wellness to you.", W/2, 52, {align:"center"});
-  doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(232,213,163);
-  doc.text("Pop-Up Event IV Therapy Consent, Medical Screening & Liability Waiver", W/2, 63, {align:"center"});
-
-  y = 90;
+  function drawFooter(pageNum, totalPages) {
+    gold(); doc.setLineWidth(0.8); doc.line(M, FOOTER_Y, W-M, FOOTER_Y);
+    doc.setFont("helvetica","normal"); doc.setFontSize(6.5); doc.setTextColor(140,140,140);
+    doc.text(`Strive To ThrIVe Wellness LLC  |  Colorado-Licensed Medical Services  |  HIPAA Compliant  |  Page ${pageNum} of ${totalPages}`, W/2, FOOTER_Y+10, {align:"center"});
+  }
 
   function sectionHead(title) {
+    checkPage(28);
     doc.setFillColor(10,10,10);
-    doc.rect(M, y, CW, 20, "F");
+    doc.rect(M, y, CW, 19, "F");
     gold(); doc.setLineWidth(1.5); doc.line(M, y, M+CW, y);
-    doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(255,255,255);
-    doc.text(title, M+7, y+13.5);
-    y += 26;
+    doc.setFont("times","bold"); doc.setFontSize(9.5); doc.setTextColor(255,255,255);
+    doc.text(title, M+6, y+13);
+    y += 24;
   }
 
   function fieldRow(label, value) {
-    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(100,100,100);
-    doc.text(label.toUpperCase(), M, y);
-    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(20,20,20);
     const lines = doc.splitTextToSize(value || "—", CW);
-    doc.text(lines, M, y+12);
-    y += 12 + (lines.length * 12) + 6;
+    const needed = 18 + (lines.length * 11) + 5;
+    checkPage(needed);
+    doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.setTextColor(100,100,100);
+    doc.text(label.toUpperCase(), M, y);
+    y += 11;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5); doc.setTextColor(20,20,20);
+    doc.text(lines, M, y);
+    y += (lines.length * 11) + 5;
   }
 
-  function checkPage() { if (y > 720) { doc.addPage(); y = 40; } }
+  function consentBlock(text) {
+    const lines = doc.splitTextToSize(text, CW - 10);
+    const needed = lines.length * 10 + 10;
+    checkPage(needed);
+    doc.setFillColor(245,244,240);
+    doc.setDrawColor(201,168,76);
+    doc.setLineWidth(2);
+    doc.rect(M, y, CW, needed, "F");
+    doc.line(M, y, M, y + needed);
+    doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(40,40,40);
+    doc.text(lines, M + 10, y + 10);
+    y += needed + 6;
+  }
 
-  // Patient Info
+  function bulletList(items) {
+    items.forEach(item => {
+      const lines = doc.splitTextToSize("• " + item, CW - 8);
+      checkPage(lines.length * 10 + 4);
+      doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(40,40,40);
+      doc.text(lines, M + 4, y);
+      y += lines.length * 10 + 2;
+    });
+    y += 4;
+  }
+
+  function twoCol(leftLabel, leftVal, rightLabel, rightVal) {
+    const hw = CW / 2 - 4;
+    const lLines = doc.splitTextToSize(leftVal || "—", hw);
+    const rLines = doc.splitTextToSize(rightVal || "—", hw);
+    const needed = 18 + (Math.max(lLines.length, rLines.length) * 11) + 5;
+    checkPage(needed);
+    doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.setTextColor(100,100,100);
+    doc.text(leftLabel.toUpperCase(), M, y);
+    doc.text(rightLabel.toUpperCase(), M + CW/2 + 4, y);
+    y += 11;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9.5); doc.setTextColor(20,20,20);
+    doc.text(lLines, M, y);
+    doc.text(rLines, M + CW/2 + 4, y);
+    y += (Math.max(lLines.length, rLines.length) * 11) + 5;
+  }
+
+  let pageCount = 1;
+  function checkPage(needed = 30) {
+    if (y + needed > FOOTER_Y - 10) {
+      drawFooter(pageCount, "??");
+      doc.addPage();
+      pageCount++;
+      drawHeader();
+      y = 80;
+    }
+  }
+
+  // ── Page 1 header ──
+  drawHeader();
+  y = 82;
+
+  // ── 1. PATIENT INFORMATION ──
   sectionHead("PATIENT INFORMATION");
-  fieldRow("Full Name", data.patient_name);
-  fieldRow("Date of Birth", data.dob);
-  fieldRow("Phone", data.phone);
-  fieldRow("Email", data.email);
+  twoCol("Full Legal Name", data.patient_name, "Date of Birth", data.dob);
+  twoCol("Phone", data.phone, "Email", data.email);
   if (data.address) fieldRow("Address", data.address);
-  if (data.ec_name) fieldRow("Emergency Contact", `${data.ec_name} — ${data.ec_phone}`);
-  y += 6; checkPage();
+  if (data.ec_name) twoCol("Emergency Contact", data.ec_name, "EC Phone", data.ec_phone);
+  y += 4;
 
-  // Treatments
+  // ── 2. TREATMENT SELECTION ──
   sectionHead("TREATMENT SELECTION");
-  fieldRow("Services Requested", data.treatments + (data.tx_other ? ` / ${data.tx_other}` : ""));
-  y += 6; checkPage();
+  fieldRow("Services Requested", data.treatments + (data.tx_other ? " / " + data.tx_other : ""));
+  y += 4;
 
-  // Medical History
-  sectionHead("MEDICAL HISTORY");
+  // ── 3. MEDICAL HISTORY ──
+  sectionHead("MEDICAL HISTORY & CONTRAINDICATION SCREENING");
   fieldRow("Conditions Disclosed", data.hx);
-  if (data.hx_explain) fieldRow("Explanation / Medications", data.hx_explain);
-  fieldRow("Alcohol (last 24h)", data.alcohol + (data.alcohol_count ? ` — ${data.alcohol_count} drinks` : ""));
-  fieldRow("Cannabis (last 72h)", data.cannabis);
-  fieldRow("Other Substances (72h)", data.substances);
-  y += 6; checkPage();
+  if (data.hx_explain) fieldRow("Explanation / Current Medications", data.hx_explain);
+  twoCol("Alcohol (last 24h)", data.alcohol + (data.alcohol_count ? " — " + data.alcohol_count + " drinks" : ""), "Cannabis (last 72h)", data.cannabis);
+  twoCol("Other Substances (72h)", data.substances, "Photography / Marketing", data.photo_ok);
+  if (data.guardian_name) twoCol("Parent / Guardian", data.guardian_name, "Relationship", data.guardian_rel);
+  y += 4;
 
-  // Consent summary
-  sectionHead("CONSENT & AUTHORIZATIONS");
-  fieldRow("Photography / Marketing", data.photo_ok);
-  fieldRow("Minor Guardian", data.guardian_name ? `${data.guardian_name} (${data.guardian_rel})` : "N/A — Adult Patient");
-  y += 6; checkPage();
+  // ── 4. INFORMED CONSENT ──
+  sectionHead("INFORMED CONSENT FOR TREATMENT");
+  consentBlock(
+    "I voluntarily consent to receive IV hydration therapy, vitamin therapy, injections, medications, amino acids, minerals, antioxidants, and wellness treatments offered by Strive To ThrIVe Wellness LLC and administered by a licensed Registered Nurse under the supervision and standing orders of its Colorado-licensed Medical Director. I acknowledge that no guarantee has been made regarding results or outcomes. I understand that wellness IV therapy is not a substitute for emergency medical care, primary care services, or treatment of diagnosed medical conditions, and that Strive To ThrIVe Wellness does not diagnose or treat disease."
+  );
 
-  // Signature
+  // ── 5. RISKS ──
+  sectionHead("RISKS & POTENTIAL SIDE EFFECTS");
+  bulletList([
+    "Pain, bruising, redness, swelling, or bleeding at the IV site",
+    "Infection or phlebitis at the insertion site",
+    "Infiltration or extravasation of IV fluid into surrounding tissue",
+    "Nausea, dizziness, headache, or vasovagal syncope (fainting)",
+    "Allergic or anaphylactic reaction to components",
+    "Changes in blood pressure or heart rate",
+    "Fluid overload (particularly in patients with cardiac or renal disease)",
+    "Rare serious complications including pulmonary edema or systemic reaction",
+    "Need for emergency medical intervention",
+  ]);
+
+  // ── 6. ALCOHOL ACKNOWLEDGMENT ──
+  sectionHead("ALCOHOL ACKNOWLEDGMENT (POP-UP EVENTS)");
+  consentBlock(
+    "I understand that IV hydration therapy does NOT reverse intoxication or alcohol poisoning, does NOT make me safe or legal to operate a motor vehicle, and is not a treatment for alcohol use disorder. Strive To ThrIVe Wellness reserves the right to decline treatment if the treating RN or Medical Director determines I appear intoxicated, impaired, or unable to provide informed consent."
+  );
+
+  // ── 7. HIPAA ──
+  sectionHead("HIPAA & COLORADO PRIVACY ACKNOWLEDGMENT");
+  consentBlock(
+    "I acknowledge that my protected health information (PHI) may be collected, stored, and maintained in Strive To ThrIVe Wellness's HIPAA-compliant medical record system, including Jane App and/or other HIPAA-compliant platforms, in accordance with the Health Insurance Portability and Accountability Act (HIPAA) and applicable Colorado state privacy laws (C.R.S. § 25-1-801 et seq.)."
+  );
+
+  // ── 8. RELEASE OF LIABILITY ──
+  sectionHead("RELEASE OF LIABILITY & PATIENT CERTIFICATION");
+  consentBlock(
+    "I certify that I have answered all questions truthfully and to the best of my knowledge. Participation is entirely voluntary and I may withdraw consent at any time prior to or during treatment. I have had the opportunity to ask questions and have them answered to my satisfaction. I agree to release and hold harmless Strive To ThrIVe Wellness LLC, its members, officers, Medical Director, and nursing staff from liability for complications arising from undisclosed medical conditions or from the inherent risks of IV therapy as described above. This waiver is governed by the laws of the State of Colorado. My electronic signature below carries the same legal weight as a handwritten signature under the Colorado Electronic Transactions Act (C.R.S. § 24-71.3-101 et seq.) and the federal E-SIGN Act."
+  );
+
+  // ── 9. SIGNATURE ──
   sectionHead("ELECTRONIC SIGNATURE");
-  fieldRow("Signed by", data.patient_name);
-  fieldRow("Date / Time", `${data.sig_date}  ${data.sig_time} (Mountain Time)`);
+  twoCol("Signed By", data.patient_name, "Date / Time", data.sig_date + "  " + data.sig_time + " MT");
   fieldRow("Submitted", data.submitted_at + " MT");
+  y += 4;
 
-  // Sig image
-  if (y > 650) { doc.addPage(); y = 40; }
-  doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(100,100,100);
+  // Signature image — keep on same page if possible
+  checkPage(100);
+  doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.setTextColor(100,100,100);
   doc.text("PATIENT SIGNATURE", M, y);
   y += 6;
-  doc.setDrawColor(201,168,76); doc.setLineWidth(1);
-  doc.rect(M, y, 280, 80);
-  doc.addImage(data.sig_image, "PNG", M+2, y+2, 276, 76);
-  y += 90;
+  doc.setDrawColor(201,168,76); doc.setLineWidth(1.5);
+  doc.rect(M, y, 290, 85);
+  doc.addImage(data.sig_image, "PNG", M+2, y+2, 286, 81);
+  y += 95;
 
-  // Footer
-  doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setTextColor(140,140,140);
-  const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
+  // Minor consent if applicable
+  if (data.guardian_name) {
+    y += 4;
+    sectionHead("MINOR CONSENT");
+    twoCol("Parent / Guardian Name", data.guardian_name, "Relationship to Minor", data.guardian_rel);
+  }
+
+  // ── Footers on all pages ──
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    gold(); doc.setLineWidth(0.8); doc.line(M, 770, W-M, 770);
-    doc.setTextColor(140,140,140);
-    doc.text(`Strive To ThrIVe Wellness LLC  |  Colorado-Licensed Medical Services  |  HIPAA Compliant  |  Page ${i} of ${pages}`, W/2, 782, {align:"center"});
+    drawFooter(i, totalPages);
   }
 
   return doc;
